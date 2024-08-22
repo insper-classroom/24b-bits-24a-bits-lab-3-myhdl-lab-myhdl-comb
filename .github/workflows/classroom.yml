@@ -1,16 +1,44 @@
-name: GitHub Classroom Workflow
-
-on: [push]
-
+name: Autograding Tests
+'on':
+- workflow_dispatch
+- repository_dispatch
 permissions:
   checks: write
   actions: read
   contents: read
-
 jobs:
-  build:
-    name: Autograding
+  run-autograding-tests:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
     steps:
-      - uses: actions/checkout@v2
-      - uses: education/autograding@v1
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: exe1
+      id: exe1
+      uses: classroom-resources/autograding-python-grader@v1
+      with:
+        timeout: 10
+        max-score: 0
+        setup-command: sudo -H pip3 install -r requirements.txt
+    - name: exe2
+      id: exe2
+      uses: classroom-resources/autograding-python-grader@v1
+      with:
+        timeout: 10
+        max-score: 0
+        setup-command: ''
+    - name: exe3
+      id: exe3
+      uses: classroom-resources/autograding-python-grader@v1
+      with:
+        timeout: 10
+        max-score: 1
+        setup-command: ''
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        EXE1_RESULTS: "${{steps.exe1.outputs.result}}"
+        EXE2_RESULTS: "${{steps.exe2.outputs.result}}"
+        EXE3_RESULTS: "${{steps.exe3.outputs.result}}"
+      with:
+        runners: exe1,exe2,exe3
